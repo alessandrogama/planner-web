@@ -34,7 +34,8 @@ function debounce(fn, delay) {
 }
 
 // ── SECURITY (Encryption) ──────────────────────────────────────
-let userPassphrase = null;
+// Usamos sessionStorage para manter a senha durante a sessão (evita pedir a cada refresh)
+let userPassphrase = sessionStorage.getItem('planner_pass');
 
 const strToBuf = (str) => new TextEncoder().encode(str);
 const bufToStr = (buf) => new TextDecoder().decode(buf);
@@ -77,11 +78,32 @@ let isLocked = false;
 async function loadState() {
   try {
     const saved = localStorage.getItem(STORAGE_KEY);
-    if (!saved) return;
+    
+    // CASO 1: Primeira vez (sem dados)
+    if (!saved) {
+      document.getElementById('setupOverlay').classList.add('open');
+      return;
+    }
 
     let parsed = JSON.parse(saved);
     if (parsed._encrypted) {
       isLocked = true;
+      
+      // Tentar auto-unlock se a senha estiver no sessionStorage
+      if (userPassphrase) {
+        try {
+          const decrypted = await decryptData(parsed, userPassphrase);
+          state = JSON.parse(decrypted);
+          isLocked = false;
+          renderAfterLoad();
+          return;
+        } catch(e) {
+          sessionStorage.removeItem('planner_pass');
+          userPassphrase = null;
+        }
+      }
+      
+      // Se falhou auto-unlock ou não tem senha, mostrar overlay
       document.getElementById('unlockOverlay').classList.add('open');
       return;
     }
@@ -92,10 +114,7 @@ async function loadState() {
 }
 
 async function saveState() {
-  if (isLocked && !userPassphrase) {
-    console.warn('Tentativa de salvar estado bloqueado sem senha.');
-    return;
-  }
+  if (isLocked && !userPassphrase) return;
   try {
     let dataToSave = JSON.stringify(state);
     if (userPassphrase) {
@@ -120,46 +139,11 @@ function initFields() {
   document.getElementById('notesTop').value = state.notes || '';
 }
 
-// ── DATA PORTABILITY (Security & Privacy) ──────────────────────
-function exportData() {
-  const dataStr = JSON.stringify(state, null, 2);
-  const blob = new Blob([dataStr], { type: 'application/json' });
-  const url = URL.createObjectURL(blob);
-  const a = document.createElement('a');
-  a.href = url;
-  a.download = `planner_backup_${new Date().toISOString().split('T')[0]}.json`;
-  a.click();
-  URL.revokeObjectURL(url);
-}
-
-function importData() {
-  const input = document.createElement('input');
-  input.type = 'file';
-  input.accept = '.json';
-  input.onchange = (e) => {
-    const file = e.target.files[0];
-    if (!file) return;
-    const reader = new FileReader();
-    reader.onload = (re) => {
-      try {
-        const imported = JSON.parse(re.target.result);
-        if (confirm('Isso substituirá seus dados atuais. Continuar?')) {
-          state = imported;
-          saveState();
-          location.reload();
-        }
-      } catch(err) {
-        alert('Arquivo inválido.');
-      }
-    };
-    reader.readAsText(file);
-  };
-  input.click();
-}
-
+// ── DATA CONTROLS ──────────────────────────────────────────────
 function clearAllData() {
   if (confirm('⚠️ TEM CERTEZA? Todos os seus planos e tarefas serão apagados permanentemente.')) {
     localStorage.removeItem(STORAGE_KEY);
+    sessionStorage.removeItem('planner_pass');
     location.reload();
   }
 }
@@ -236,7 +220,6 @@ function renderCalendar() {
 
   document.getElementById('navLabel').textContent = `${MONTHS_PT[month]} ${year}`;
 
-  // Update headers
   const inputMes = document.getElementById('input-mes');
   const inputAno = document.getElementById('input-ano');
   inputMes.placeholder = state.meta.mes || MONTHS_PT[month];
@@ -265,7 +248,6 @@ function openModal(key, dayNum) {
   document.getElementById('modalTextarea').value = state.cells[key] || '';
   document.getElementById('modalOverlay').classList.add('open');
   
-  // A11y focus trap entry
   setTimeout(() => document.getElementById('modalTextarea').focus(), 100);
 }
 
@@ -382,59 +364,18 @@ function initEventListeners() {
     if (e.target.id === 'modalOverlay') closeModal();
   };
 
-  // Security
-  document.getElementById('toggleSecurity').onclick = () => {
-    if (isLocked) return; // Prevent opening while unlock screen is active
-    
-    const status = document.getElementById('securityStatus');
-    const btnApply = document.getElementById('securityApply');
-    const btnDisable = document.getElementById('securityDisable');
-    
-    document.getElementById('securityPass').value = '';
-    document.getElementById('securityOverlay').classList.add('open');
-    
-    if (userPassphrase) {
-      status.textContent = '🔒 Proteção Ativa';
-      status.style.color = 'var(--sex)';
-      btnApply.textContent = 'Alterar Senha';
-      btnDisable.style.display = 'block';
-    } else {
-      status.textContent = '🔓 Desprotegido';
-      status.style.color = 'var(--dom)';
-      btnApply.textContent = 'Ativar Proteção';
-      btnDisable.style.display = 'none';
-    }
-  };
-  document.getElementById('securityClose').onclick = () => document.getElementById('securityOverlay').classList.remove('open');
-  
-  document.getElementById('securityApply').onclick = async () => {
-    const passInput = document.getElementById('securityPass');
-    const pass = passInput.value;
-    if (pass.length < 4) return alert('Senha muito curta (min 4 caracteres)');
-    
+  // Setup Flow
+  document.getElementById('setupBtn').onclick = async () => {
+    const pass = document.getElementById('setupPass').value;
+    if (pass.length < 4) return alert('Escolha uma senha mais segura (min 4 caracteres)');
     userPassphrase = pass;
+    sessionStorage.setItem('planner_pass', pass);
     await saveState();
-    passInput.value = '';
-    document.getElementById('securityOverlay').classList.remove('open');
-    alert('✅ Proteção configurada com sucesso!');
+    document.getElementById('setupOverlay').classList.remove('open');
+    renderAfterLoad();
   };
 
-  document.getElementById('securityDisable').onclick = async () => {
-    if (!userPassphrase) return;
-    if (confirm('⚠️ ATENÇÃO: Deseja remover a criptografia? Seus dados ficarão expostos no navegador.')) {
-      userPassphrase = null;
-      await saveState();
-      document.getElementById('securityPass').value = '';
-      document.getElementById('securityOverlay').classList.remove('open');
-      alert('🔓 Criptografia removida. Dados salvos em modo aberto.');
-    }
-  };
-
-  // Unlock
-  const closeUnlock = () => document.getElementById('unlockOverlay').classList.remove('open');
-  document.getElementById('unlockClose').onclick = closeUnlock;
-  document.getElementById('unlockCancel').onclick = closeUnlock;
-
+  // Unlock Flow
   document.getElementById('unlockBtn').onclick = async () => {
     const passInput = document.getElementById('unlockPass');
     const pass = passInput.value;
@@ -442,43 +383,37 @@ function initEventListeners() {
     try {
       const decrypted = await decryptData(JSON.parse(saved), pass);
       const decryptedState = JSON.parse(decrypted);
-      
-      // HARDENING: Garantir que o estado tenha todas as propriedades necessárias
-      state = { 
-        ...state, 
-        ...decryptedState, 
-        meta: { ...state.meta, ...decryptedState.meta },
-        cells: { ...decryptedState.cells },
-        tasks: [...(decryptedState.tasks || [])]
-      };
-      
+      state = { ...state, ...decryptedState, meta: { ...state.meta, ...decryptedState.meta }, cells: { ...decryptedState.cells }, tasks: [...(decryptedState.tasks || [])] };
       userPassphrase = pass;
+      sessionStorage.setItem('planner_pass', pass);
       isLocked = false;
       passInput.value = '';
-      closeUnlock();
+      document.getElementById('unlockOverlay').classList.remove('open');
       renderAfterLoad();
     } catch(err) {
-      console.error(err);
       alert('Senha incorreta!');
+    }
+  };
+
+  document.getElementById('forgotPass').onclick = () => {
+    if (confirm('🆘 Resetar App? Todos os dados serão perdidos.')) {
+      localStorage.removeItem(STORAGE_KEY);
+      sessionStorage.removeItem('planner_pass');
+      location.reload();
     }
   };
 
   // Task Input
   const taskInput = document.getElementById('taskInput');
   const addTaskBtn = document.getElementById('taskAddBtn');
-  const triggerAddTask = () => {
-    addTask(taskInput.value);
-    taskInput.value = '';
-  };
+  const triggerAddTask = () => { addTask(taskInput.value); taskInput.value = ''; };
   addTaskBtn.onclick = triggerAddTask;
   taskInput.onkeydown = (e) => { if (e.key === 'Enter') triggerAddTask(); };
 
   // Data Controls
-  document.getElementById('exportData').onclick = exportData;
-  document.getElementById('importData').onclick = importData;
   document.getElementById('clearAll').onclick = clearAllData;
 
-  // Auto-save Fields (Debounced)
+  // Auto-save Fields
   const inputMes = document.getElementById('input-mes');
   const inputAno = document.getElementById('input-ano');
   const notesTop = document.getElementById('notesTop');
@@ -487,15 +422,11 @@ function initEventListeners() {
   inputAno.oninput = (e) => { state.meta.ano = e.target.value; debouncedSave(); };
   notesTop.oninput = (e) => { state.notes = e.target.value; debouncedSave(); };
 
-  // Global Shortcuts
+  // Shortcuts
   document.onkeydown = (e) => {
-    if (e.key === 'Escape') {
-      closeModal();
-      document.getElementById('securityOverlay').classList.remove('open');
-    }
+    if (e.key === 'Escape') closeModal();
     if (e.ctrlKey && e.key === 's' && document.getElementById('modalOverlay').classList.contains('open')) {
-      e.preventDefault();
-      saveModal();
+      e.preventDefault(); saveModal();
     }
   };
 }

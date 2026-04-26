@@ -82,11 +82,8 @@
         </div>
       </div>
 
-      <!-- DATA CONTROLS -->
+      <!-- DATA CONTROLS (Removed JSON Export/Import) -->
       <div class="data-controls">
-        <button class="control-btn" id="toggleSecurity" title="Segurança (Criptografia)">🔒</button>
-        <button class="control-btn" id="exportData" title="Exportar Dados (Backup)">📥</button>
-        <button class="control-btn" id="importData" title="Importar Dados">📤</button>
         <button class="control-btn danger" id="clearAll" title="Limpar Tudo">🗑️</button>
       </div>
 
@@ -95,24 +92,19 @@
 
 </div>
 
-<!-- SECURITY MODAL -->
-<div class="modal-overlay" id="securityOverlay" role="dialog" aria-modal="true" aria-labelledby="securityTitle">
-  <div class="modal security-modal" id="securityModal">
+<!-- INITIAL SETUP MODAL -->
+<div class="modal-overlay" id="setupOverlay">
+  <div class="modal setup-modal">
     <div class="modal-header">
-      <div class="modal-date-wrapper">
-        <span class="modal-date" id="securityTitle">Segurança Máxima</span>
-        <div class="modal-day-badge" style="background: var(--seg); color: #000;">Proteção de Dados</div>
-      </div>
-      <button class="modal-close" id="securityClose">✕</button>
+      <h2 class="modal-date">Bem-vindo ao seu Planner</h2>
     </div>
-    <div class="security-body-content">
-      <p class="security-info">Seus dados serão criptografados com **AES-256 (Padrão Militar)**. Sem a senha, ninguém (nem mesmo você) poderá ler as informações.</p>
-      <input type="password" class="task-input security-input" id="securityPass" placeholder="Digite sua senha secreta...">
-      <div class="security-status" id="securityStatus"></div>
+    <p style="margin: 10px 0; color: #888;">Para começar com segurança máxima, crie uma senha para criptografar seus dados.</p>
+    <div style="background: rgba(255,204,51,0.1); padding: 10px; border-radius: 8px; font-size: 12px; color: var(--seg); margin-bottom: 15px;">
+      🔒 AES-256: Seus planos serão transformados em códigos ilegíveis no seu navegador.
     </div>
+    <input type="password" class="task-input" id="setupPass" placeholder="Crie sua senha secreta...">
     <div class="modal-actions">
-      <button class="modal-save" id="securityApply">Aplicar Proteção</button>
-      <button class="modal-clear" id="securityDisable">Remover Senha</button>
+      <button class="modal-save" id="setupBtn">Começar a Planejar</button>
     </div>
   </div>
 </div>
@@ -122,16 +114,17 @@
   <div class="modal unlock-modal">
     <div class="modal-header">
       <h2 class="modal-date">Cofre Trancado</h2>
-      <button class="modal-close" id="unlockClose">✕</button>
     </div>
-    <p style="margin: 10px 0; color: #888;">Este planner está protegido. Insira a senha para acessar.</p>
+    <p style="margin: 10px 0; color: #888;">Insira sua senha para descriptografar seus planos.</p>
     <input type="password" class="task-input" id="unlockPass" placeholder="Sua senha...">
     <div class="modal-actions">
-      <button class="modal-save" id="unlockBtn">Desbloquear</button>
-      <button class="modal-clear" id="unlockCancel">Cancelar</button>
+      <button class="modal-save" id="unlockBtn">Acessar Planner</button>
     </div>
+    <button id="forgotPass" style="background:none; border:none; color:#555; font-size:12px; margin-top:15px; cursor:pointer; text-decoration:underline;">Esqueci a senha / Resetar App</button>
   </div>
 </div>
+
+<!-- REMOVED: SECURITY MODAL (No longer needed in sidebar) -->
 
 <!-- CELL MODAL -->
 <div class="modal-overlay" id="modalOverlay" role="dialog" aria-modal="true" aria-labelledby="modalDate">
