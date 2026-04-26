@@ -619,6 +619,41 @@ html, body {
 }
 .nav-btn:hover { background: rgba(255, 255, 255, 0.2); }
 
+/* ── SECURITY MODAL ───────────────────────────────────────── */
+.security-modal {
+  max-width: 400px;
+  text-align: center;
+}
+
+.security-info {
+  font-family: var(--font-hand);
+  font-size: 16px;
+  color: #888;
+  margin-bottom: 20px;
+  line-height: 1.6;
+}
+
+.security-input {
+  text-align: center;
+  font-size: 24px;
+  letter-spacing: 4px;
+  margin-bottom: 15px;
+}
+
+.security-status {
+  font-family: var(--font-marker);
+  font-size: 14px;
+  color: var(--seg);
+  margin-bottom: 10px;
+  text-transform: uppercase;
+}
+
+.unlock-modal {
+  max-width: 350px;
+  border-color: var(--ter);
+  box-shadow: 0 0 50px rgba(255, 51, 102, 0.2);
+}
+
 /* ── RESPONSIVE ──────────────────────────────────────────── */
 @media (max-width: 700px) {
   .board { padding: 10px 10px 100px; }

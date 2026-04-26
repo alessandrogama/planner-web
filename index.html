@@ -84,6 +84,7 @@
 
       <!-- DATA CONTROLS -->
       <div class="data-controls">
+        <button class="control-btn" id="toggleSecurity" title="Segurança (Criptografia)">🔒</button>
         <button class="control-btn" id="exportData" title="Exportar Dados (Backup)">📥</button>
         <button class="control-btn" id="importData" title="Importar Dados">📤</button>
         <button class="control-btn danger" id="clearAll" title="Limpar Tudo">🗑️</button>
@@ -92,6 +93,42 @@
     </aside>
   </div>
 
+</div>
+
+<!-- SECURITY MODAL -->
+<div class="modal-overlay" id="securityOverlay" role="dialog" aria-modal="true" aria-labelledby="securityTitle">
+  <div class="modal security-modal" id="securityModal">
+    <div class="modal-header">
+      <div class="modal-date-wrapper">
+        <span class="modal-date" id="securityTitle">Segurança Máxima</span>
+        <div class="modal-day-badge" style="background: var(--seg); color: #000;">Proteção de Dados</div>
+      </div>
+      <button class="modal-close" id="securityClose">✕</button>
+    </div>
+    <div class="security-body-content">
+      <p class="security-info">Seus dados serão criptografados com **AES-256 (Padrão Militar)**. Sem a senha, ninguém (nem mesmo você) poderá ler as informações.</p>
+      <input type="password" class="task-input security-input" id="securityPass" placeholder="Digite sua senha secreta...">
+      <div class="security-status" id="securityStatus"></div>
+    </div>
+    <div class="modal-actions">
+      <button class="modal-save" id="securityApply">Aplicar Proteção</button>
+      <button class="modal-clear" id="securityDisable">Remover Senha</button>
+    </div>
+  </div>
+</div>
+
+<!-- UNLOCK OVERLAY -->
+<div class="modal-overlay" id="unlockOverlay">
+  <div class="modal unlock-modal">
+    <div class="modal-header">
+      <h2 class="modal-date">Cofre Trancado</h2>
+    </div>
+    <p style="margin: 10px 0; color: #888;">Este planner está protegido. Insira a senha para acessar.</p>
+    <input type="password" class="task-input" id="unlockPass" placeholder="Sua senha...">
+    <div class="modal-actions">
+      <button class="modal-save" id="unlockBtn">Desbloquear</button>
+    </div>
+  </div>
 </div>
 
 <!-- CELL MODAL -->

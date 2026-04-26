@@ -33,29 +33,85 @@ function debounce(fn, delay) {
   };
 }
 
-// ── STORAGE ───────────────────────────────────────────────────
-function loadState() {
-  try {
-    const saved = localStorage.getItem(STORAGE_KEY);
-    if (saved) {
-      const parsed = JSON.parse(saved);
-      // Deep merge or ensure structure
-      state = { ...state, ...parsed, meta: { ...state.meta, ...parsed.meta } };
-    }
-  } catch(e) {
-    console.error('Falha ao carregar dados:', e);
-  }
+// ── SECURITY (Encryption) ──────────────────────────────────────
+let userPassphrase = null;
+
+const strToBuf = (str) => new TextEncoder().encode(str);
+const bufToStr = (buf) => new TextDecoder().decode(buf);
+
+async function deriveKey(password, salt) {
+  const baseKey = await crypto.subtle.importKey("raw", strToBuf(password), "PBKDF2", false, ["deriveKey"]);
+  return crypto.subtle.deriveKey(
+    { name: "PBKDF2", salt, iterations: 100000, hash: "SHA-256" },
+    baseKey,
+    { name: "AES-GCM", length: 256 },
+    false,
+    ["encrypt", "decrypt"]
+  );
 }
 
-function saveState() {
+async function encryptData(data, password) {
+  const salt = crypto.getRandomValues(new Uint8Array(16));
+  const iv = crypto.getRandomValues(new Uint8Array(12));
+  const key = await deriveKey(password, salt);
+  const encrypted = await crypto.subtle.encrypt({ name: "AES-GCM", iv }, key, strToBuf(data));
+  return {
+    salt: btoa(String.fromCharCode(...salt)),
+    iv: btoa(String.fromCharCode(...iv)),
+    data: btoa(String.fromCharCode(...new Uint8Array(encrypted)))
+  };
+}
+
+async function decryptData(encryptedObj, password) {
+  const salt = new Uint8Array(atob(encryptedObj.salt).split("").map(c => c.charCodeAt(0)));
+  const iv = new Uint8Array(atob(encryptedObj.iv).split("").map(c => c.charCodeAt(0)));
+  const data = new Uint8Array(atob(encryptedObj.data).split("").map(c => c.charCodeAt(0)));
+  const key = await deriveKey(password, salt);
+  const decrypted = await crypto.subtle.decrypt({ name: "AES-GCM", iv }, key, data);
+  return bufToStr(decrypted);
+}
+
+// ── STORAGE ───────────────────────────────────────────────────
+async function loadState() {
   try {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
-  } catch(e) {
-    console.error('Falha ao salvar dados:', e);
-  }
+    const saved = localStorage.getItem(STORAGE_KEY);
+    if (!saved) return;
+
+    let parsed = JSON.parse(saved);
+    if (parsed._encrypted) {
+      document.getElementById('unlockOverlay').classList.add('open');
+      return; // Wait for unlock
+    }
+
+    state = { ...state, ...parsed, meta: { ...state.meta, ...parsed.meta } };
+    renderAfterLoad();
+  } catch(e) { console.error('Falha ao carregar:', e); }
+}
+
+async function saveState() {
+  try {
+    let dataToSave = JSON.stringify(state);
+    if (userPassphrase) {
+      const encrypted = await encryptData(dataToSave, userPassphrase);
+      dataToSave = JSON.stringify({ _encrypted: true, ...encrypted });
+    }
+    localStorage.setItem(STORAGE_KEY, dataToSave);
+  } catch(e) { console.error('Falha ao salvar:', e); }
 }
 
 const debouncedSave = debounce(saveState, 500);
+
+function renderAfterLoad() {
+  renderCalendar();
+  renderTasks();
+  initFields();
+}
+
+function initFields() {
+  document.getElementById('input-mes').value = state.meta.mes || '';
+  document.getElementById('input-ano').value = state.meta.ano || '';
+  document.getElementById('notesTop').value = state.notes || '';
+}
 
 // ── DATA PORTABILITY (Security & Privacy) ──────────────────────
 function exportData() {
@@ -311,12 +367,52 @@ function initEventListeners() {
     renderCalendar();
   };
 
-  // Modal
+  // Modals
   document.getElementById('modalClose').onclick = closeModal;
   document.getElementById('modalSave').onclick = saveModal;
   document.getElementById('modalClear').onclick = clearModal;
   document.getElementById('modalOverlay').onclick = (e) => {
     if (e.target.id === 'modalOverlay') closeModal();
+  };
+
+  // Security
+  document.getElementById('toggleSecurity').onclick = () => {
+    document.getElementById('securityOverlay').classList.add('open');
+    document.getElementById('securityStatus').textContent = userPassphrase ? 'Proteção Ativa' : 'Desprotegido';
+  };
+  document.getElementById('securityClose').onclick = () => document.getElementById('securityOverlay').classList.remove('open');
+  
+  document.getElementById('securityApply').onclick = async () => {
+    const pass = document.getElementById('securityPass').value;
+    if (pass.length < 4) return alert('Senha muito curta (min 4 caracteres)');
+    userPassphrase = pass;
+    await saveState();
+    document.getElementById('securityOverlay').classList.remove('open');
+    alert('✅ Proteção ativada com sucesso!');
+  };
+
+  document.getElementById('securityDisable').onclick = async () => {
+    if (confirm('Deseja remover a criptografia? Seus dados ficarão expostos no navegador.')) {
+      userPassphrase = null;
+      await saveState();
+      document.getElementById('securityOverlay').classList.remove('open');
+      alert('🔓 Proteção removida.');
+    }
+  };
+
+  // Unlock
+  document.getElementById('unlockBtn').onclick = async () => {
+    const pass = document.getElementById('unlockPass').value;
+    const saved = localStorage.getItem(STORAGE_KEY);
+    try {
+      const decrypted = await decryptData(JSON.parse(saved), pass);
+      state = JSON.parse(decrypted);
+      userPassphrase = pass;
+      document.getElementById('unlockOverlay').classList.remove('open');
+      renderAfterLoad();
+    } catch(err) {
+      alert('Senha incorreta!');
+    }
   };
 
   // Task Input
@@ -339,17 +435,16 @@ function initEventListeners() {
   const inputAno = document.getElementById('input-ano');
   const notesTop = document.getElementById('notesTop');
 
-  inputMes.value = state.meta.mes || '';
-  inputAno.value = state.meta.ano || '';
-  notesTop.value = state.notes || '';
-
   inputMes.oninput = (e) => { state.meta.mes = e.target.value; debouncedSave(); };
   inputAno.oninput = (e) => { state.meta.ano = e.target.value; debouncedSave(); };
   notesTop.oninput = (e) => { state.notes = e.target.value; debouncedSave(); };
 
   // Global Shortcuts
   document.onkeydown = (e) => {
-    if (e.key === 'Escape') closeModal();
+    if (e.key === 'Escape') {
+      closeModal();
+      document.getElementById('securityOverlay').classList.remove('open');
+    }
     if (e.ctrlKey && e.key === 's' && document.getElementById('modalOverlay').classList.contains('open')) {
       e.preventDefault();
       saveModal();
@@ -358,11 +453,9 @@ function initEventListeners() {
 }
 
 // ── INIT ───────────────────────────────────────────────────────
-function init() {
-  loadState();
+async function init() {
+  await loadState();
   initEventListeners();
-  renderCalendar();
-  renderTasks();
 }
 
 window.onload = init;
