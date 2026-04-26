@@ -1,40 +1,44 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Planejar para Realizar</title>
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link href="https://fonts.googleapis.com/css2?family=Caveat:wght@400;600;700&family=Permanent+Marker&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="style.css">
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta http-equiv="X-Content-Type-Options" content="nosniff">
+  <meta name="referrer" content="strict-origin-when-cross-origin">
+  <meta name="description" content="Um planner pessoal minimalista e tátil para organizar sua rotina de forma vibrante e eficiente.">
+  <title>Planejar para Realizar | Seu Planner Pessoal</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Caveat:wght@400;600;700&family=Permanent+Marker&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="style.css">
 </head>
 <body>
 
-<div class="board" id="board">
+<div class="board" id="board" role="main">
 
   <!-- HEADER -->
   <header class="board-header">
     <div class="header-left">
-      <div class="sparkles">✦ ✦ ✦</div>
+      <div class="sparkles" aria-hidden="true">✦ ✦ ✦</div>
       <h1 class="title-main">PLANEJAR</h1>
       <span class="title-sub">para realizar!</span>
-      <div class="wavy-line">〰〰〰〰〰〰</div>
+      <div class="wavy-line" aria-hidden="true">〰〰〰〰〰〰</div>
     </div>
     <div class="header-meta">
       <div class="meta-field">
-        <span class="meta-label">Mês</span>
-        <input class="meta-input" id="input-mes" type="text" placeholder="Abril" maxlength="20">
+        <label for="input-mes" class="meta-label">Mês</label>
+        <input class="meta-input" id="input-mes" type="text" placeholder="Abril" maxlength="20" aria-label="Nome do Mês">
       </div>
       <div class="meta-field">
-        <span class="meta-label">Ano</span>
-        <input class="meta-input" id="input-ano" type="text" placeholder="2025" maxlength="6">
+        <label for="input-ano" class="meta-label">Ano</label>
+        <input class="meta-input" id="input-ano" type="text" placeholder="2025" maxlength="6" aria-label="Ano Atual">
       </div>
     </div>
   </header>
 
   <!-- MAIN GRID -->
   <div class="planner-body">
-    <div class="calendar-section">
+    <section class="calendar-section" aria-label="Calendário Mensal">
 
       <!-- DAY HEADERS -->
       <div class="day-headers">
@@ -48,10 +52,10 @@
       </div>
 
       <!-- CALENDAR WEEKS -->
-      <div class="calendar-grid" id="calendarGrid">
+      <div class="calendar-grid" id="calendarGrid" role="grid">
         <!-- injected by JS -->
       </div>
-    </div>
+    </section>
 
     <!-- SIDEBAR -->
     <aside class="sidebar">
@@ -59,23 +63,30 @@
       <!-- ANOTAÇÕES -->
       <div class="sticky-note yellow" id="stickyTop">
         <div class="sticky-header">
-          <span class="sticky-icon">📌</span>
-          <span class="sticky-title">anotações</span>
+          <span class="sticky-icon" aria-hidden="true">📌</span>
+          <h2 class="sticky-title">anotações</h2>
         </div>
-        <textarea class="sticky-body" id="notesTop" placeholder="Escreva suas anotações aqui..."></textarea>
+        <textarea class="sticky-body" id="notesTop" placeholder="Escreva suas anotações aqui..." aria-label="Área de anotações gerais"></textarea>
       </div>
 
       <!-- TAREFAS -->
       <div class="task-panel" id="taskPanel">
         <div class="task-panel-header">
-          <span class="task-icon">✅</span>
-          <span class="task-title">tarefas</span>
+          <span class="task-icon" aria-hidden="true">✅</span>
+          <h2 class="task-title">tarefas</h2>
         </div>
-        <div class="task-list" id="taskList"></div>
+        <div class="task-list" id="taskList" role="list"></div>
         <div class="task-input-row">
-          <input class="task-input" id="taskInput" type="text" placeholder="+ nova tarefa...">
-          <button class="task-add-btn" id="taskAddBtn">↵</button>
+          <input class="task-input" id="taskInput" type="text" placeholder="+ nova tarefa..." aria-label="Adicionar nova tarefa">
+          <button class="task-add-btn" id="taskAddBtn" aria-label="Cadastrar tarefa">↵</button>
         </div>
+      </div>
+
+      <!-- DATA CONTROLS -->
+      <div class="data-controls">
+        <button class="control-btn" id="exportData" title="Exportar Dados (Backup)">📥</button>
+        <button class="control-btn" id="importData" title="Importar Dados">📤</button>
+        <button class="control-btn danger" id="clearAll" title="Limpar Tudo">🗑️</button>
       </div>
 
     </aside>
@@ -84,14 +95,16 @@
 </div>
 
 <!-- CELL MODAL -->
-<div class="modal-overlay" id="modalOverlay">
+<div class="modal-overlay" id="modalOverlay" role="dialog" aria-modal="true" aria-labelledby="modalDate">
   <div class="modal" id="modal">
     <div class="modal-header">
-      <span class="modal-date" id="modalDate"></span>
-      <div class="modal-day-badge" id="modalDayBadge"></div>
-      <button class="modal-close" id="modalClose">✕</button>
+      <div class="modal-date-wrapper">
+        <span class="modal-date" id="modalDate"></span>
+        <div class="modal-day-badge" id="modalDayBadge"></div>
+      </div>
+      <button class="modal-close" id="modalClose" aria-label="Fechar Modal">✕</button>
     </div>
-    <textarea class="modal-textarea" id="modalTextarea" placeholder="O que acontece neste dia?"></textarea>
+    <textarea class="modal-textarea" id="modalTextarea" placeholder="O que acontece neste dia?" aria-label="Detalhes do dia"></textarea>
     <div class="modal-actions">
       <button class="modal-save" id="modalSave">Salvar</button>
       <button class="modal-clear" id="modalClear">Limpar</button>
@@ -100,11 +113,11 @@
 </div>
 
 <!-- MONTH NAV -->
-<nav class="month-nav">
-  <button class="nav-btn" id="prevMonth">‹</button>
+<nav class="month-nav" aria-label="Navegação de Meses">
+  <button class="nav-btn" id="prevMonth" aria-label="Mês Anterior">‹</button>
   <span class="nav-label" id="navLabel"></span>
-  <button class="nav-btn" id="nextMonth">›</button>
-  <button class="nav-btn reset-btn" id="goToday" title="Hoje">◎</button>
+  <button class="nav-btn" id="nextMonth" aria-label="Próximo Mês">›</button>
+  <button class="nav-btn reset-btn" id="goToday" title="Hoje" aria-label="Ir para hoje">◎</button>
 </nav>
 
 <script src="app.js"></script>
