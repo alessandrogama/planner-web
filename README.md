@@ -76,5 +76,13 @@ No installation required:
 3. Set your master password.
 4. Start planning.
 
+## CI/CD & Automated Deployment
+
+This project includes a fully automated **CI/CD pipeline** via GitHub Actions.
+
+- **Automated Deploy:** Every push to the `main` branch triggers a deployment to GitHub Pages.
+- **Workflow:** The system validates the code, packages the static assets, and updates the live site automatically.
+- **Zero-Touch:** Once configured, you never need to manually upload files or manage hosting.
+
 ---
 *"Planning is the first step. Execution is what defines you."*
