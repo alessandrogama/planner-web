@@ -72,6 +72,8 @@ async function decryptData(encryptedObj, password) {
 }
 
 // ── STORAGE ───────────────────────────────────────────────────
+let isLocked = false;
+
 async function loadState() {
   try {
     const saved = localStorage.getItem(STORAGE_KEY);
@@ -79,8 +81,9 @@ async function loadState() {
 
     let parsed = JSON.parse(saved);
     if (parsed._encrypted) {
+      isLocked = true;
       document.getElementById('unlockOverlay').classList.add('open');
-      return; // Wait for unlock
+      return;
     }
 
     state = { ...state, ...parsed, meta: { ...state.meta, ...parsed.meta } };
@@ -89,6 +92,10 @@ async function loadState() {
 }
 
 async function saveState() {
+  if (isLocked && !userPassphrase) {
+    console.warn('Tentativa de salvar estado bloqueado sem senha.');
+    return;
+  }
   try {
     let dataToSave = JSON.stringify(state);
     if (userPassphrase) {
@@ -377,9 +384,26 @@ function initEventListeners() {
 
   // Security
   document.getElementById('toggleSecurity').onclick = () => {
-    document.getElementById('securityPass').value = ''; // Always start empty
+    if (isLocked) return; // Prevent opening while unlock screen is active
+    
+    const status = document.getElementById('securityStatus');
+    const btnApply = document.getElementById('securityApply');
+    const btnDisable = document.getElementById('securityDisable');
+    
+    document.getElementById('securityPass').value = '';
     document.getElementById('securityOverlay').classList.add('open');
-    document.getElementById('securityStatus').textContent = userPassphrase ? 'Proteção Ativa' : 'Desprotegido';
+    
+    if (userPassphrase) {
+      status.textContent = '🔒 Proteção Ativa';
+      status.style.color = 'var(--sex)';
+      btnApply.textContent = 'Alterar Senha';
+      btnDisable.style.display = 'block';
+    } else {
+      status.textContent = '🔓 Desprotegido';
+      status.style.color = 'var(--dom)';
+      btnApply.textContent = 'Ativar Proteção';
+      btnDisable.style.display = 'none';
+    }
   };
   document.getElementById('securityClose').onclick = () => document.getElementById('securityOverlay').classList.remove('open');
   
@@ -387,36 +411,54 @@ function initEventListeners() {
     const passInput = document.getElementById('securityPass');
     const pass = passInput.value;
     if (pass.length < 4) return alert('Senha muito curta (min 4 caracteres)');
+    
     userPassphrase = pass;
     await saveState();
-    passInput.value = ''; // Clear from DOM immediately
+    passInput.value = '';
     document.getElementById('securityOverlay').classList.remove('open');
-    alert('✅ Proteção ativada com sucesso!');
+    alert('✅ Proteção configurada com sucesso!');
   };
 
   document.getElementById('securityDisable').onclick = async () => {
-    if (confirm('Deseja remover a criptografia? Seus dados ficarão expostos no navegador.')) {
+    if (!userPassphrase) return;
+    if (confirm('⚠️ ATENÇÃO: Deseja remover a criptografia? Seus dados ficarão expostos no navegador.')) {
       userPassphrase = null;
       await saveState();
-      document.getElementById('securityPass').value = ''; // Clear from DOM
+      document.getElementById('securityPass').value = '';
       document.getElementById('securityOverlay').classList.remove('open');
-      alert('🔓 Proteção removida.');
+      alert('🔓 Criptografia removida. Dados salvos em modo aberto.');
     }
   };
 
   // Unlock
+  const closeUnlock = () => document.getElementById('unlockOverlay').classList.remove('open');
+  document.getElementById('unlockClose').onclick = closeUnlock;
+  document.getElementById('unlockCancel').onclick = closeUnlock;
+
   document.getElementById('unlockBtn').onclick = async () => {
     const passInput = document.getElementById('unlockPass');
     const pass = passInput.value;
     const saved = localStorage.getItem(STORAGE_KEY);
     try {
       const decrypted = await decryptData(JSON.parse(saved), pass);
-      state = JSON.parse(decrypted);
+      const decryptedState = JSON.parse(decrypted);
+      
+      // HARDENING: Garantir que o estado tenha todas as propriedades necessárias
+      state = { 
+        ...state, 
+        ...decryptedState, 
+        meta: { ...state.meta, ...decryptedState.meta },
+        cells: { ...decryptedState.cells },
+        tasks: [...(decryptedState.tasks || [])]
+      };
+      
       userPassphrase = pass;
-      passInput.value = ''; // Clear from DOM immediately
-      document.getElementById('unlockOverlay').classList.remove('open');
+      isLocked = false;
+      passInput.value = '';
+      closeUnlock();
       renderAfterLoad();
     } catch(err) {
+      console.error(err);
       alert('Senha incorreta!');
     }
   };

@@ -452,12 +452,14 @@ html, body {
   display: flex;
   align-items: center;
   justify-content: center;
-  z-index: 1000;
+  z-index: 2000;
   opacity: 0;
   pointer-events: none;
   transition: opacity 0.3s;
 }
 .modal-overlay.open { opacity: 1; pointer-events: all; }
+
+#unlockOverlay { z-index: 3000; }
 
 .modal {
   background: #0f0f0f;
