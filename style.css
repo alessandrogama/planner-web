@@ -654,6 +654,10 @@ html, body {
   box-shadow: 0 0 50px rgba(255, 51, 102, 0.2);
 }
 
+.unlock-modal input {
+  margin: 20px 0;
+}
+
 /* ── RESPONSIVE ──────────────────────────────────────────── */
 @media (max-width: 700px) {
   .board { padding: 10px 10px 100px; }
