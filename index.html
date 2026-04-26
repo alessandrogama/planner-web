@@ -1,0 +1,112 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Planejar para Realizar</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Caveat:wght@400;600;700&family=Permanent+Marker&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<div class="board" id="board">
+
+  <!-- HEADER -->
+  <header class="board-header">
+    <div class="header-left">
+      <div class="sparkles">✦ ✦ ✦</div>
+      <h1 class="title-main">PLANEJAR</h1>
+      <span class="title-sub">para realizar!</span>
+      <div class="wavy-line">〰〰〰〰〰〰</div>
+    </div>
+    <div class="header-meta">
+      <div class="meta-field">
+        <span class="meta-label">Mês</span>
+        <input class="meta-input" id="input-mes" type="text" placeholder="Abril" maxlength="20">
+      </div>
+      <div class="meta-field">
+        <span class="meta-label">Ano</span>
+        <input class="meta-input" id="input-ano" type="text" placeholder="2025" maxlength="6">
+      </div>
+    </div>
+  </header>
+
+  <!-- MAIN GRID -->
+  <div class="planner-body">
+    <div class="calendar-section">
+
+      <!-- DAY HEADERS -->
+      <div class="day-headers">
+        <div class="day-header seg">Segunda</div>
+        <div class="day-header ter">Terça</div>
+        <div class="day-header qua">Quarta</div>
+        <div class="day-header qui">Quinta</div>
+        <div class="day-header sex">Sexta</div>
+        <div class="day-header sab">Sábado</div>
+        <div class="day-header dom">Domingo</div>
+      </div>
+
+      <!-- CALENDAR WEEKS -->
+      <div class="calendar-grid" id="calendarGrid">
+        <!-- injected by JS -->
+      </div>
+    </div>
+
+    <!-- SIDEBAR -->
+    <aside class="sidebar">
+
+      <!-- ANOTAÇÕES -->
+      <div class="sticky-note yellow" id="stickyTop">
+        <div class="sticky-header">
+          <span class="sticky-icon">📌</span>
+          <span class="sticky-title">anotações</span>
+        </div>
+        <textarea class="sticky-body" id="notesTop" placeholder="Escreva suas anotações aqui..."></textarea>
+      </div>
+
+      <!-- TAREFAS -->
+      <div class="task-panel" id="taskPanel">
+        <div class="task-panel-header">
+          <span class="task-icon">✅</span>
+          <span class="task-title">tarefas</span>
+        </div>
+        <div class="task-list" id="taskList"></div>
+        <div class="task-input-row">
+          <input class="task-input" id="taskInput" type="text" placeholder="+ nova tarefa...">
+          <button class="task-add-btn" id="taskAddBtn">↵</button>
+        </div>
+      </div>
+
+    </aside>
+  </div>
+
+</div>
+
+<!-- CELL MODAL -->
+<div class="modal-overlay" id="modalOverlay">
+  <div class="modal" id="modal">
+    <div class="modal-header">
+      <span class="modal-date" id="modalDate"></span>
+      <div class="modal-day-badge" id="modalDayBadge"></div>
+      <button class="modal-close" id="modalClose">✕</button>
+    </div>
+    <textarea class="modal-textarea" id="modalTextarea" placeholder="O que acontece neste dia?"></textarea>
+    <div class="modal-actions">
+      <button class="modal-save" id="modalSave">Salvar</button>
+      <button class="modal-clear" id="modalClear">Limpar</button>
+    </div>
+  </div>
+</div>
+
+<!-- MONTH NAV -->
+<nav class="month-nav">
+  <button class="nav-btn" id="prevMonth">‹</button>
+  <span class="nav-label" id="navLabel"></span>
+  <button class="nav-btn" id="nextMonth">›</button>
+  <button class="nav-btn reset-btn" id="goToday" title="Hoje">◎</button>
+</nav>
+
+<script src="app.js"></script>
+</body>
+</html>
