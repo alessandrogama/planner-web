@@ -123,20 +123,14 @@ html, body {
   text-transform: lowercase;
 }
 
-.meta-input {
-  background: transparent;
-  border: none;
-  border-bottom: 2px solid #222;
+.meta-value {
   color: var(--chalk-white);
   font-family: var(--font-hand);
   font-size: 24px;
   font-weight: 600;
-  width: 120px;
-  outline: none;
   padding: 4px 0;
-  transition: var(--transition);
+  min-width: 80px;
 }
-.meta-input:focus { border-color: var(--seg); border-bottom-style: dashed; }
 
 /* ── PLANNER BODY ───────────────────────────────────────── */
 .planner-body {

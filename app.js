@@ -130,12 +130,6 @@ const debouncedSave = debounce(saveState, 500);
 function renderAfterLoad() {
   renderCalendar();
   renderTasks();
-  initFields();
-}
-
-function initFields() {
-  document.getElementById('input-mes').value = state.meta.mes || '';
-  document.getElementById('input-ano').value = state.meta.ano || '';
   document.getElementById('notesTop').value = state.notes || '';
 }
 
@@ -219,11 +213,10 @@ function renderCalendar() {
   }
 
   document.getElementById('navLabel').textContent = `${MONTHS_PT[month]} ${year}`;
-
-  const inputMes = document.getElementById('input-mes');
-  const inputAno = document.getElementById('input-ano');
-  inputMes.placeholder = state.meta.mes || MONTHS_PT[month];
-  inputAno.placeholder = state.meta.ano || String(year);
+  
+  // Update header text
+  document.getElementById('header-mes').textContent = MONTHS_PT[month];
+  document.getElementById('header-ano').textContent = year;
 }
 
 // ── MODAL ──────────────────────────────────────────────────────
@@ -414,12 +407,7 @@ function initEventListeners() {
   document.getElementById('clearAll').onclick = clearAllData;
 
   // Auto-save Fields
-  const inputMes = document.getElementById('input-mes');
-  const inputAno = document.getElementById('input-ano');
   const notesTop = document.getElementById('notesTop');
-
-  inputMes.oninput = (e) => { state.meta.mes = e.target.value; debouncedSave(); };
-  inputAno.oninput = (e) => { state.meta.ano = e.target.value; debouncedSave(); };
   notesTop.oninput = (e) => { state.notes = e.target.value; debouncedSave(); };
 
   // Shortcuts
