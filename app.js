@@ -377,16 +377,19 @@ function initEventListeners() {
 
   // Security
   document.getElementById('toggleSecurity').onclick = () => {
+    document.getElementById('securityPass').value = ''; // Always start empty
     document.getElementById('securityOverlay').classList.add('open');
     document.getElementById('securityStatus').textContent = userPassphrase ? 'Proteção Ativa' : 'Desprotegido';
   };
   document.getElementById('securityClose').onclick = () => document.getElementById('securityOverlay').classList.remove('open');
   
   document.getElementById('securityApply').onclick = async () => {
-    const pass = document.getElementById('securityPass').value;
+    const passInput = document.getElementById('securityPass');
+    const pass = passInput.value;
     if (pass.length < 4) return alert('Senha muito curta (min 4 caracteres)');
     userPassphrase = pass;
     await saveState();
+    passInput.value = ''; // Clear from DOM immediately
     document.getElementById('securityOverlay').classList.remove('open');
     alert('✅ Proteção ativada com sucesso!');
   };
@@ -395,6 +398,7 @@ function initEventListeners() {
     if (confirm('Deseja remover a criptografia? Seus dados ficarão expostos no navegador.')) {
       userPassphrase = null;
       await saveState();
+      document.getElementById('securityPass').value = ''; // Clear from DOM
       document.getElementById('securityOverlay').classList.remove('open');
       alert('🔓 Proteção removida.');
     }
@@ -402,12 +406,14 @@ function initEventListeners() {
 
   // Unlock
   document.getElementById('unlockBtn').onclick = async () => {
-    const pass = document.getElementById('unlockPass').value;
+    const passInput = document.getElementById('unlockPass');
+    const pass = passInput.value;
     const saved = localStorage.getItem(STORAGE_KEY);
     try {
       const decrypted = await decryptData(JSON.parse(saved), pass);
       state = JSON.parse(decrypted);
       userPassphrase = pass;
+      passInput.value = ''; // Clear from DOM immediately
       document.getElementById('unlockOverlay').classList.remove('open');
       renderAfterLoad();
     } catch(err) {
